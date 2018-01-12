@@ -119,7 +119,7 @@ def drawWindPic(windFpath,resultFpath):
 
 wfpath = './pred.csv'
 resultFpath = './result.csv'
-windTestPath = '../tianchi/data/ForecastDataforTesting_201712.csv'
+windTestPath = '../data/ForecastDataforTesting_201712.csv'
 if __name__ == '__main__':
     checkData(windTestPath,resultFpath)
     drawWindPic(windTestPath,resultFpath)
