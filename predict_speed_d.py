@@ -75,7 +75,7 @@ Y = 421
 DATE = 5
 HOUR = 18
 MODULE = 10
-upd_batch = 1000
+upd_batch = 100000
 
 def load_data(fpath):
     with open(fpath,newline='') as csvfile:
@@ -89,7 +89,7 @@ def load_data(fpath):
                 continue
             x_id = int(row[-6])-1
             y_id = int(row[-5])-1
-            date = int(row[-4])-1
+            date = int(row[-4])-1     ##当训练时改为1，导出结果数据时，用6
             hour = int(row[-3])-3
             model = int(row[-2])-1
             wind = float(row[-1])
@@ -253,8 +253,8 @@ def training_task():
 def export_pred(model_path):
     model = Model()
     model.load_state_dict(torch.load(model_path))
-    fpath = '../data/ForecastDataforTesting_201712.csv'
-    out_csv = '../data/result/pred.csv'
+    fpath = '../data/ForecastDataforTraining_201712.csv'
+    out_csv = '../data/result/pred_train.csv'
     out_fp = open(out_csv, 'w+', newline='')
 
     def write_batch(model, csv_writer, batch, batch_row):
@@ -264,41 +264,59 @@ def export_pred(model_path):
         for i in range(len(batch)):
             csv_writer.writerow(batch_row[i][0:4] + [str(out_.data[i][0])])
 
+    load_data(fpath)
     with open(fpath, newline='') as csvfile:
         testreader = csv.reader(csvfile)
         testwriter = csv.writer(out_fp,delimiter=',')
-        testwriter.writerow(['x', 'y', 'day', 'hour', 'windspeed'])
+        testwriter.writerow(['x', 'y', 'day', 'hour', 'wind'])
         row_num = 0
         batch = []
         batch_rows = []
         pack = []
-        batch_size = 100000
-        for row in testreader:
-            row_num = row_num + 1
-            if row_num == 1:
-                continue
-            #print(row)
-            hour = float(row[-3])
-            pack.append(float(row[-1]) / 15.0)
-            #10 row a pack
-            if 0 == (row_num - 1) % 10 and row_num > 10:
-                pack.append(float(row[0]) / 548.0)
-                pack.append(float(row[0]) / 421.0)
-                pack.append(hour / 24.0)
-                _itm = np.asarray(pack)
-                batch.append(_itm)
-                batch_rows.append(row)
-                pack = []
-                
-            
-            if 0 == (row_num - 1) % batch_size and row_num > 10:
-                write_batch(model, testwriter, batch, batch_rows)
-                batch.clear()
-                batch_rows.clear()
-                print((row_num - 1) / (548.0 * 421.0 * 18 * 5 * 10))
+        batch_size = 10000
+        BIAS = [-1,0,1]
+        row = []
 
+        for d in range(DATE):
+            for h in range(HOUR):
+                for x in range(X):
+                    for y in range(Y):
+                        for xbias in BIAS:
+                            for ybias in BIAS:
+                                sum = 0
+                                if x+xbias < X and y+ybias < Y and x+xbias >=0 and y+ybias >=0 and h-1 >= 0:
+                                    for m in range(MODULE):
+                                        sum = sum + Data[d][x+xbias][y+ybias][h-1][m]
+                                    pack.append(sum/10)
+                                elif h-1 >= 0:
+                                    for m in range(MODULE):
+                                        sum = sum + Data[d][x][y][h-1][m]
+                                    pack.append(sum/10)###如果附近的数据不存在，就把其它自己的数据加进去，作补充，保证数据维度一致
+                                else:
+                                    for m in range(MODULE):
+                                        sum = sum + Data[d][x][y][h][m]
+                                    pack.append(sum/10)####理由同上
+                    
+                        for m in range(MODULE):
+                            pack.append(Data[d][x][y][h][m])
+                        pack.append((h+3)/24.0)
+                        pack.append(float(x/X))
+                        pack.append(float(y/Y))
+                        _itm = np.asarray(pack)
+                        batch.append(_itm)
+                        pack=[]
+
+                        row = [x,y,d+6,h+3]
+                        batch_rows.append(row)
+
+                        if len(batch) % batch_size == 0:
+                            write_batch(model,testwriter,batch,batch_rows)
+                            batch.clear()
+                            batch_rows.clear()
+                            print(len(batch)/(548.0*421.0*18.0*5.0*10.0))
+        
         write_batch(model, testwriter, batch, batch_rows)
-        print("data done %d"%(row_num))
+        print("data done %d"%(d*h*x*y))
 
 def export_pred_to_data(model_path):
     model = Model()
@@ -355,8 +373,8 @@ def export_pred_to_data(model_path):
         print("data done %d"%(row_num))
         return ret
 
-model_path = "../saved_model_2135200"
+model_path = "./saved_model_2135200"
 
 if __name__ == '__main__':
-    ##training_task()
-    export_pred(model_path)
+    training_task()
+    ##export_pred(model_path)

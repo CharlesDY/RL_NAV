@@ -57,11 +57,11 @@ def load_data(filePath,tfilePath):
 
 def drawDifference(filePath,tfilePath):
     Data = pd.read_csv(filePath)
-    Data = Data['wind'].values.reshape((DATE,HOUR,X,Y,MODULE))
+    Data = Data['wind'].values.reshape((DATE,HOUR,X,Y))
     # x => m
-    Data = np.swapaxes(Data,2,4)
+    #Data = np.swapaxes(Data,2,4)
     # x => y
-    Data = np.swapaxes(Data,3,4)
+    #Data = np.swapaxes(Data,3,4)
     TruthData = pd.read_csv(tfilePath)
     TruthData = TruthData['wind'].values.reshape((DATE,HOUR,X,Y))
 
@@ -71,18 +71,33 @@ def drawDifference(filePath,tfilePath):
 
     for d in range(DATE):
         for h in range(HOUR):
-            AVG = np.zeros((X,Y))
+            '''AVG = np.zeros((X,Y))
             for m in range(MODULE):
                 AVG = AVG + Data[d][h][m]
                 differ = Data[d][h][m] - TruthData[d][h]
                 plt.imsave(arr = differ,cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_'+str(m)+'.png',format = 'png',origin = 'lower')
                 plt.imsave(arr = Data[d][h][m],cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_'+str(m)+'_t' + '.png',format = 'png',origin = 'lower')
                 print('pic '+str(d)+'_'+str(h)+'_'+str(m)+'.png'+' saved')
-            AVG = AVG / MODULE
-            plt.imsave(arr = AVG,cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_avg'+'.png',format = 'png',origin = 'lower')
-            lm = (1 + (TruthData[d][h] >= 15) - (AVG >= 15)) * 10
+            AVG = AVG / MODULE'''
+            arr = np.zeros((X,Y))
+            arr = Data[d][h]
+            plt.imsave(arr = arr,cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_avg'+'.png',format = 'png',origin = 'lower')
+            lm = (1 + (TruthData[d][h] >= 1) - (arr >= 1)) * 10
             plt.imsave(arr = lm,cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_lm'+'.png',format = 'png',origin = 'lower')
-            plt.imsave(arr = (AVG >= 15),cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_avg_b'+'.png',format = 'png',origin = 'lower')
+            plt.imsave(arr = (arr >= 1),cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_avg_b'+'.png',format = 'png',origin = 'lower')
+            
+            diff = np.zeros((X,Y))
+            s_diff = 0
+            for x in range(X):
+                for y in range(Y):
+                    if TruthData[d][h][x][y] > 0.7 and Data[d][h][x][y] < 0.7:
+                        diff[x][y] = 1
+                        s_diff = s_diff + 1
+            print("S_Diff = %d"%s_diff)
+            plt.imsave(arr = diff,cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'_diff'+'.png',format = 'png',origin = 'lower')
+            s = sum(sum(abs(TruthData[d][h]-Data[d][h])))
+
+            print("Sum  = %d"%s)
 
 def draw_true(tfilePath):
     TruthData = pd.read_csv(tfilePath)
@@ -90,10 +105,11 @@ def draw_true(tfilePath):
     for d in range(DATE):
         for h in range(HOUR):
             plt.imsave(arr = TruthData[d][h],cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'.png',format = 'png',origin = 'lower')
-            plt.imsave(arr = (TruthData[d][h] >= 15),cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+ '_b' +'.png',format = 'png',origin = 'lower')
+            plt.imsave(arr = (TruthData[d][h] >= 1),cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+ '_b' +'.png',format = 'png',origin = 'lower')
 
-filePath = '../data/ForecastDataforTraining_201712.csv'
 tfilePath = '../data/In_situMeasurementforTraining_201712.csv'
+filePath = '../data/result/pred_train.csv'
+
 
 if __name__ == '__main__':
     print(filePath)
