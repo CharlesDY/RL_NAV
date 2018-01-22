@@ -23,7 +23,7 @@ if use_cuda:
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.in_dim = 22
+        self.in_dim = 13
         self.h_dim = 40
         self.layer_num = 5
         self.out_dim = 1
