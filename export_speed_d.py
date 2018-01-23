@@ -254,7 +254,7 @@ def export_pred(model_path):
     model = Model()
     model.load_state_dict(torch.load(model_path))
     fpath = '../data/ForecastDataforTesting_201712.csv'
-    out_csv = '../data/result/pred.csv'
+    out_csv = '../data/result/pred_test.csv'
     out_fp = open(out_csv, 'w+', newline='')
 
     def write_batch(model, csv_writer, batch, batch_row):

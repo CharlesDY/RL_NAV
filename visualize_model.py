@@ -107,11 +107,11 @@ def draw_true(tfilePath):
             plt.imsave(arr = TruthData[d][h],cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+'.png',format = 'png',origin = 'lower')
             plt.imsave(arr = (TruthData[d][h] >= 1),cmap='gray',fname = '../data/modelPic/'+str(d)+'_'+str(h)+ '_b' +'.png',format = 'png',origin = 'lower')
 
-tfilePath = '../data/In_situMeasurementforTraining_201712.csv'
-filePath = '../data/result/pred_train.csv'
+filePath = '../data/In_situMeasurementforTraining_201712.csv'
+tfilePath = '../data/result/pred_test.csv'
 
 
 if __name__ == '__main__':
     print(filePath)
-    drawDifference(filePath,tfilePath)
+    ##drawDifference(filePath,tfilePath)
     draw_true(tfilePath)
